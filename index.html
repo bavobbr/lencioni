@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>U16G-1 Lencioni Team Assessment</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f0f3f9;
+  --border: #e2e6ef;
+  --text: #0f172a;
+  --text-muted: #5b6677;
+  --primary: #1e3a8a;
+  --primary-soft: #e0e7ff;
+  --accent: #ca8a04;
+  --good: #16a34a;
+  --good-soft: #dcfce7;
+  --warn: #d97706;
+  --warn-soft: #fef3c7;
+  --bad: #dc2626;
+  --bad-soft: #fee2e2;
+  --shadow: 0 1px 2px rgba(15,23,42,.04), 0 4px 12px rgba(15,23,42,.06);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+header.page {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+  color: white;
+  padding: 28px 32px;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+header.page .eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: .85;
+  font-weight: 600;
+}
+header.page h1 {
+  margin: 6px 0 4px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+header.page p { margin: 4px 0 0; opacity: .9; font-size: 13px; }
+header.page .meta {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+}
+header.page .meta div span:first-child {
+  display: block; font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; opacity: .7;
+}
+header.page .meta div span:last-child { font-size: 16px; font-weight: 600; }
+
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  background: var(--surface); padding: 4px;
+  border-radius: 10px; box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+.tab {
+  padding: 10px 18px; border: none; background: transparent;
+  cursor: pointer; font-size: 13px; font-weight: 500;
+  color: var(--text-muted); border-radius: 7px;
+  white-space: nowrap; transition: all .15s ease;
+}
+.tab:hover { color: var(--text); background: var(--surface-2); }
+.tab.active { background: var(--primary); color: white; }
+
+.panel { display: none; }
+.panel.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+
+.group-toggle {
+  display: inline-flex; background: var(--surface);
+  border-radius: 8px; padding: 3px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.group-toggle button {
+  border: none; background: transparent;
+  padding: 8px 14px; font-size: 12px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer; border-radius: 6px;
+}
+.group-toggle button.active { background: var(--primary-soft); color: var(--primary); }
+
+.grid-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.kpi {
+  background: var(--surface); border-radius: 12px;
+  padding: 18px; box-shadow: var(--shadow);
+  border-left: 4px solid var(--border);
+  position: relative;
+}
+.kpi.good { border-left-color: var(--good); }
+.kpi.warn { border-left-color: var(--warn); }
+.kpi.bad { border-left-color: var(--bad); }
+.kpi .label {
+  font-size: 11px; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--text-muted);
+  font-weight: 600;
+}
+.kpi .name { font-size: 14px; font-weight: 600; margin: 4px 0 8px; }
+.kpi .value { font-size: 30px; font-weight: 700; line-height: 1; }
+.kpi .value small { font-size: 14px; color: var(--text-muted); font-weight: 500; margin-left: 2px; }
+.kpi .pill {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 999px; margin-top: 8px;
+  letter-spacing: .5px;
+}
+.pill.good { background: var(--good-soft); color: var(--good); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad  { background: var(--bad-soft);  color: var(--bad); }
+
+.card {
+  background: var(--surface); border-radius: 12px;
+  padding: 22px; box-shadow: var(--shadow);
+  margin-bottom: 18px;
+}
+.card h2 {
+  margin: 0 0 4px; font-size: 16px; font-weight: 700;
+  color: var(--text);
+}
+.card .subtitle { color: var(--text-muted); font-size: 12px; margin-bottom: 16px; }
+.card .row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 800px) { .card .row { grid-template-columns: 1fr; } }
+.chart-wrap { position: relative; height: 340px; }
+
+table.stmts {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+table.stmts th {
+  text-align: left; font-weight: 600; font-size: 11px;
+  letter-spacing: .5px; text-transform: uppercase;
+  color: var(--text-muted); padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+table.stmts td {
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+table.stmts td.num { font-weight: 600; color: var(--text-muted); width: 30px; }
+table.stmts td.score { text-align: right; font-weight: 700; width: 80px; }
+table.stmts td.bar { width: 200px; }
+.barbg { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.barfg { height: 100%; border-radius: 4px; transition: width .5s ease; }
+.barfg.good { background: var(--good); }
+.barfg.warn { background: var(--warn); }
+.barfg.bad { background: var(--bad); }
+
+.disf-accordion { display: flex; flex-direction: column; gap: 10px; }
+.disf-item {
+  background: var(--surface); border-radius: 12px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.disf-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; cursor: pointer; user-select: none;
+}
+.disf-head:hover { background: var(--surface-2); }
+.disf-head .left { display: flex; align-items: center; gap: 14px; }
+.disf-head .badge {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; color: white;
+}
+.disf-head .title { font-weight: 600; font-size: 15px; }
+.disf-head .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.disf-head .score-big { font-size: 24px; font-weight: 700; }
+.disf-head .arrow { color: var(--text-muted); transition: transform .2s; }
+.disf-item.open .arrow { transform: rotate(180deg); }
+.disf-body { padding: 0 20px 18px; display: none; }
+.disf-item.open .disf-body { display: block; }
+
+.legend {
+  display: flex; gap: 14px; margin-bottom: 18px; font-size: 12px;
+  color: var(--text-muted);
+}
+.legend span::before {
+  content: ''; display: inline-block; width: 10px; height: 10px;
+  border-radius: 50%; margin-right: 6px; vertical-align: middle;
+}
+.legend .l-good::before { background: var(--good); }
+.legend .l-warn::before { background: var(--warn); }
+.legend .l-bad::before  { background: var(--bad);  }
+
+.advies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.advies-card {
+  background: var(--surface); border-radius: 12px;
+  padding: 20px; box-shadow: var(--shadow);
+  border-top: 3px solid var(--primary);
+}
+.advies-card h3 {
+  margin: 0 0 8px; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.advies-card h3 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+.advies-card ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--text); }
+.advies-card ul li { margin-bottom: 6px; }
+.advies-card.work { border-top-color: var(--bad); }
+.advies-card.work h3 .dot { background: var(--bad); }
+.advies-card.focus { border-top-color: var(--warn); }
+.advies-card.focus h3 .dot { background: var(--warn); }
+.advies-card.strong { border-top-color: var(--good); }
+.advies-card.strong h3 .dot { background: var(--good); }
+
+.note {
+  font-size: 12px; color: var(--text-muted);
+  padding: 10px 14px; background: var(--surface-2);
+  border-left: 3px solid var(--accent); border-radius: 4px;
+  margin: 14px 0;
+}
+.pyramid {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; margin: 18px 0;
+}
+.pyramid .level {
+  padding: 12px 22px; color: white; font-weight: 600;
+  border-radius: 8px; font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--shadow);
+}
+.pyramid .level .lvl-score {
+  background: rgba(255,255,255,.25); padding: 2px 8px;
+  border-radius: 999px; font-size: 12px;
+}
+.pyramid .level.l1 { width: 86%; background: #1e40af; }
+.pyramid .level.l2 { width: 72%; background: #3b82f6; }
+.pyramid .level.l3 { width: 58%; background: #60a5fa; color: #0c1c40; }
+.pyramid .level.l4 { width: 44%; background: #93c5fd; color: #0c1c40; }
+.pyramid .level.l5 { width: 30%; background: #bfdbfe; color: #0c1c40; }
+
+.heatmap {
+  display: grid; grid-template-columns: 110px repeat(5, 1fr);
+  gap: 4px; font-size: 12px;
+}
+.heatmap .h-row-label {
+  padding: 8px; font-weight: 600; color: var(--text);
+  display: flex; align-items: center;
+}
+.heatmap .h-col-label {
+  padding: 8px 6px; font-weight: 600; font-size: 11px;
+  text-align: center; color: var(--text-muted);
+}
+.heatmap .h-cell {
+  padding: 10px 6px; text-align: center; font-weight: 700;
+  color: white; border-radius: 6px; font-size: 13px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="page">
+  <div class="eyebrow">Stage Trainer C · Mentale aspecten</div>
+  <h1>U16G-1 · Lencioni Team Assessment</h1>
+  <p>De 5 disfuncties van een team — analyse op basis van 16 ingevulde vragenlijsten (13 spelers + 3 stafleden).</p>
+  <div class="meta">
+    <div><span>Respondenten</span><span>16</span></div>
+    <div><span>Spelers</span><span>13</span></div>
+    <div><span>Staf</span><span>3</span></div>
+    <div><span>Stellingen gebruikt</span><span>36 / 38</span></div>
+    <div><span>Schaal</span><span>1 – 5 (Likert)</span></div>
+  </div>
+</header>
+
+<div class="note" style="background:#fef3c7;border-left-color:#d97706;color:#7c2d12;margin-bottom:18px;">
+  <strong>⚠ Stellingen 25 en 37 uitgesloten wegens dubbelzinnige formulering.</strong>
+  <ul style="margin:8px 0 0;padding-left:18px;">
+    <li><strong>Stelling 25</strong> — "Teamleden zijn traag om krediet te zoeken voor hun eigen bijdragen." De negatieve formulering ("traag om") is verwarrend: een hoge score is hier juist positief, wat tegen-intuïtief is voor jonge spelers.</li>
+    <li><strong>Stelling 37</strong> — "Teamleden hechten weinig belang aan titels en status." Respondenten lazen "titels" eerder als <em>kampioenstitels</em> dan als <em>persoonlijke titels/status</em>.</li>
+  </ul>
+  Beide stellingen zitten in D5 (Resultaten); D5 wordt daardoor berekend over <strong>6 i.p.v. 8 items</strong>. De individuele scores van 25 en 37 blijven zichtbaar in de detailtabel, maar zijn duidelijk gemarkeerd als uitgesloten en niet meegerekend.
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab active" data-tab="overview">Overzicht</button>
+  <button class="tab" data-tab="disfuncties">Per disfunctie</button>
+  <button class="tab" data-tab="vergelijk">Spelers vs staf</button>
+  <button class="tab" data-tab="individueel">Individuele spreiding</button>
+  <button class="tab" data-tab="advies">Advies & plan van aanpak</button>
+</div>
+
+<!-- ========== OVERZICHT ========== -->
+<section class="panel active" id="overview">
+  <div class="group-toggle" id="group-toggle">
+    <button data-group="Alle (16)" class="active">Alle (16)</button>
+    <button data-group="Spelers (13)">Spelers (13)</button>
+    <button data-group="Staf (3)">Staf (3)</button>
+  </div>
+
+  <div class="grid-kpi" id="kpi-grid"></div>
+
+  <div class="card">
+    <h2>De Lencioni-piramide</h2>
+    <div class="subtitle">Hoe je team scoort op elk niveau van de piramide. Hogere score = minder disfunctie (sterker team).</div>
+    <div class="legend">
+      <span class="l-good">Sterk (≥ 4.0)</span>
+      <span class="l-warn">Aandachtspunt (3.0 – 3.99)</span>
+      <span class="l-bad">Werkpunt (&lt; 3.0)</span>
+    </div>
+    <div class="pyramid" id="pyramid"></div>
+    <div class="note">
+      <strong>Lezen van de piramide:</strong> Lencioni stelt dat elke disfunctie de bovenliggende veroorzaakt. Vertrouwen is de basis; zonder vertrouwen geen open conflict; zonder open conflict geen betrokkenheid; enzovoort. Werk dus altijd <em>onderaan</em> de piramide eerst.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Radar — alle disfuncties in één oogopslag</h2>
+    <div class="subtitle">Gemiddelde score per disfunctie. Verder van het midden = beter.</div>
+    <div class="chart-wrap"><canvas id="radarOverview"></canvas></div>
+  </div>
+</section>
+
+<!-- ========== PER DISFUNCTIE ========== -->
+<section class="panel" id="disfuncties">
+  <div class="group-toggle" id="group-toggle-d">
+    <button data-group="Alle (16)" class="active">Alle (16)</button>
+    <button data-group="Spelers (13)">Spelers (13)</button>
+    <button data-group="Staf (3)">Staf (3)</button>
+  </div>
+  <div class="note">
+    Klik op een disfunctie om de onderliggende stellingen en hun gemiddelde scores te zien. Stellingen met de laagste scores zijn de meest concrete werkpunten.
+  </div>
+  <div class="disf-accordion" id="disfAccordion"></div>
+</section>
+
+<!-- ========== SPELERS VS STAF ========== -->
+<section class="panel" id="vergelijk">
+  <div class="card">
+    <h2>Vergelijking spelers vs staf — gemiddelde per disfunctie</h2>
+    <div class="subtitle">Liggen de percepties van spelers en staf in dezelfde richting? Grote verschillen wijzen op blinde vlekken.</div>
+    <div class="chart-wrap"><canvas id="cmpBar"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Radar overlay</h2>
+    <div class="subtitle">Visuele overlay van spelers- en stafperceptie.</div>
+    <div class="chart-wrap"><canvas id="cmpRadar"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Grootste verschillen per stelling</h2>
+    <div class="subtitle">Top 10 stellingen waar spelers en staf het meest van elkaar verschillen.</div>
+    <table class="stmts" id="diffTable"><thead>
+      <tr><th>#</th><th>Stelling</th><th>Spelers</th><th>Staf</th><th>Δ</th></tr>
+    </thead><tbody></tbody></table>
+  </div>
+</section>
+
+<!-- ========== INDIVIDUEEL ========== -->
+<section class="panel" id="individueel">
+  <div class="card">
+    <h2>Spreiding per respondent (heatmap)</h2>
+    <div class="subtitle">Gemiddelde score per disfunctie, per anonieme respondent. Zo zie je in één oogopslag waar de spreiding zit.</div>
+    <div id="heatmap" class="heatmap"></div>
+  </div>
+  <div class="card">
+    <h2>Spreiding per disfunctie (boxplot-stijl)</h2>
+    <div class="subtitle">Voor elke disfunctie: alle individuele gemiddeldes uitgezet, om consensus vs verdeeldheid te zien.</div>
+    <div class="chart-wrap"><canvas id="spreadChart"></canvas></div>
+  </div>
+</section>
+
+<!-- ========== ADVIES ========== -->
+<section class="panel" id="advies">
+  <div class="card">
+    <h2>Diagnose in één blik</h2>
+    <div class="subtitle">Sterktes om te behouden, werkpunten om aan te pakken — gebaseerd op de groepsgemiddeldes.</div>
+    <div class="advies-grid">
+      <div class="advies-card strong">
+        <h3><span class="dot"></span>Sterkte — Betrokkenheid (D3)</h3>
+        <p style="font-size:13px;margin:0 0 8px;">Gem. 4.04 — het team is duidelijk over richting en doelen, houdt vast aan beslissingen en is afgestemd.</p>
+        <ul>
+          <li><strong>Behouden:</strong> blijf na elke vergadering of bespreking expliciet de beslissing samenvatten ("Wat hebben we afgesproken?").</li>
+          <li>Maak de gemeenschappelijke doelen visueel zichtbaar (poster in de kleedkamer, app, board).</li>
+        </ul>
+      </div>
+      <div class="advies-card focus">
+        <h3><span class="dot"></span>Aandachtspunt — Vertrouwen (D1)</h3>
+        <p style="font-size:13px;margin:0 0 8px;">Gem. 3.67 — basisvertrouwen is er, maar kwetsbaarheid tonen ("fouten toegeven", "zwakheden delen") scoort lager.</p>
+        <ul>
+          <li>Open trainingen met een korte "check-in": één ding waar je deze week mee zit.</li>
+          <li>Coach toont eigen kwetsbaarheid eerst — voorbeeldgedrag.</li>
+          <li>Persoonlijke kennismakings-oefening (Lencioni's "personal histories") in een teammoment.</li>
+        </ul>
+      </div>
+      <div class="advies-card focus">
+        <h3><span class="dot"></span>Aandachtspunt — Resultaten (D5)</h3>
+        <p style="font-size:13px;margin:0 0 8px;">Gem. 3.85 (zonder uitgesloten stellingen 25 en 37) — D3 (Betrokkenheid) en D5 (Resultaten) zijn de sterkste pijlers. Aandachtspunt blijft persoonlijke verantwoordelijkheid bij verlies (stelling 14, 3.12).</p>
+        <ul>
+          <li>Definieer 2–3 teamgerichte resultaten (assists, defensieve recoveries) náást individuele stats.</li>
+          <li>Erken collectieve mijlpalen expliciet in de groep.</li>
+          <li>Heroverweeg de vragenlijst: stellingen 25 en 37 herformuleren voor een volgende afname (positief geformuleerd, met duidelijke uitleg over wat "titels" betekent).</li>
+        </ul>
+      </div>
+      <div class="advies-card work">
+        <h3><span class="dot"></span>Werkpunt #1 — Angst voor conflicten (D2)</h3>
+        <p style="font-size:13px;margin:0 0 8px;">Gem. 3.27 — onenigheid wordt vermeden, impopulaire meningen blijven liggen.</p>
+        <ul>
+          <li>Introduceer een vaste "wedstrijdevaluatie" met de regel: één ding wat goed ging, één ding wat anders moet.</li>
+          <li>Coach speelt "miner of conflict": stel expliciet de moeilijke vraag op tafel.</li>
+          <li>Spreek een team-norm af: "Stilte ≠ instemming."</li>
+        </ul>
+      </div>
+      <div class="advies-card work">
+        <h3><span class="dot"></span>Werkpunt #2 — Verantwoordelijkheid (D4)</h3>
+        <p style="font-size:13px;margin:0 0 8px;">Gem. 3.28 — teamleden spreken elkaar moeilijk aan op gedrag of prestaties (stellingen 8, 16, 20 scoren laag).</p>
+        <ul>
+          <li>Maak een eenvoudige set <strong>gedragsafspraken</strong> (5 max) en hang ze op.</li>
+          <li>Train peer-feedback in kleine groepjes: "ik zag... ik voelde... ik wens...".</li>
+          <li>Roteer een "speler van de week" die elkaar feedback geeft i.p.v. enkel coach → speler.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Plan van aanpak — 6 weken</h2>
+    <div class="subtitle">Concrete interventies om sterktes te behouden en werkpunten te verkleinen.</div>
+    <table class="stmts">
+      <thead><tr><th>Week</th><th>Focus</th><th>Actie</th><th>Meting</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Vertrouwen</td><td>Personal histories-oefening (15 min). Coach gaat voor.</td><td>Sfeer-check (1–5) na de sessie.</td></tr>
+        <tr><td class="num">2</td><td>Vertrouwen</td><td>Check-in voor elke training (2 min).</td><td>Aanwezigheid + spontane bijdragen.</td></tr>
+        <tr><td class="num">3</td><td>Conflict</td><td>Wedstrijdevaluatie-format invoeren: +1 / Δ1.</td><td>Aantal genoemde punten per speler.</td></tr>
+        <tr><td class="num">4</td><td>Conflict</td><td>Coach pakt expliciet 1 lastig onderwerp aan in groepsgesprek.</td><td>Speler-stemming via anonieme vraag.</td></tr>
+        <tr><td class="num">5</td><td>Verantwoordelijkheid</td><td>Top-5 gedragsafspraken vastleggen (samen met team).</td><td>Aantal afspraken nageleefd.</td></tr>
+        <tr><td class="num">6</td><td>Resultaten</td><td>Team-KPI's (assists, recoveries) zichtbaar maken.</td><td>Bespreken na elke wedstrijd.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Wat te verifiëren in trainingen & wedstrijden</h2>
+    <div class="subtitle">Toetspunten om de vragenlijst-bevindingen kwalitatief te bevestigen.</div>
+    <ul style="font-size:13px;">
+      <li><strong>Vertrouwen:</strong> hoeveel spelers vragen spontaan om hulp tijdens drills?</li>
+      <li><strong>Conflict:</strong> wordt er na een verloren actie gesproken of zwijgen spelers?</li>
+      <li><strong>Betrokkenheid:</strong> herhalen spelers de teamafspraak na de bespreking?</li>
+      <li><strong>Verantwoordelijkheid:</strong> wijzen medespelers elkaar op laat-komen, onproductief gedrag?</li>
+      <li><strong>Resultaten:</strong> wordt er gejuicht voor een ploegmaatassist, of vooral voor eigen doelpunten?</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+
+<script>
+const DATA = {"stellingen":["Teamleden geven hun fouten toe.","Teamleden zijn gepassioneerd en open in hun discussie over problemen.","Teamleden wijzen snel op de bijdragen en prestaties van anderen.","Teamvergaderingen zijn interessant en meeslepend (niet saai).","Tijdens teamvergaderingen worden de belangrijkste en moeilijkste kwesties besproken.","Teamleden erkennen hun zwakheden aan elkaar.","Teamleden uiten hun mening, zelfs met het risico dat ze onenigheid veroorzaken.","Teamleden wijzen elkaar op onproductief gedrag.","Het team heeft een reputatie voor hoge prestaties.","Teamleden vragen zonder aarzelen om hulp.","Teamleden verlaten vergaderingen met het vertrouwen dat hun collega's volledig toegewijd zijn aan de beslissingen die zijn overeengekomen, zelfs als ze het aanvankelijk oneens waren.","Tijdens discussies dagen teamleden elkaar uit over hoe ze tot hun conclusies en meningen zijn gekomen.","Teamleden vragen elkaar om input over hun verantwoordelijkheidsgebieden.","Wanneer het team er niet in slaagt om collectieve doelen te bereiken, neemt elk lid persoonlijke verantwoordelijkheid om de prestaties van het team te verbeteren.","Teamleden brengen graag offers in hun gebied voor het welzijn van het team.","Teamleden zijn snel om collega's te confronteren met problemen in hun respectievelijke verantwoordelijkheidsgebieden.","Teamleden erkennen en benutten elkaars vaardigheden en expertise.","Teamleden vragen elkaars mening tijdens vergaderingen.","Teamleden eindigen discussies met duidelijke en specifieke oplossingen en oproepen tot actie.","Teamleden bevragen elkaar over hun huidige aanpak en werkwijze.","Het team zorgt ervoor dat slecht presterende mensen druk voelen en de verwachting om te verbeteren.","Teamleden verontschuldigen zich gewillig bij elkaar.","Teamleden communiceren impopulaire meningen naar de groep.","Het team is duidelijk over de richting en prioriteiten.","Teamleden zijn traag om krediet te zoeken voor hun eigen bijdragen.","Alle leden van het team worden aan dezelfde hoge normen gehouden.","Wanneer er een conflict optreedt, confronteert en behandelt het team het probleem.","Het team is afgestemd op gemeenschappelijke doelstellingen.","Het team behaalt consequent zijn doelstellingen.","Het team is daadkrachtig, ook als perfecte informatie niet beschikbaar is.","Teamleden hechten meer waarde aan collectief succes dan aan individuele prestaties.","Teamleden gaan open en oprecht met elkaar om.","Teamleden kunnen comfortabel hun persoonlijke leven met elkaar bespreken.","Het team houdt vast aan beslissingen.","Teamleden houden zich consequent aan beloften en toezeggingen.","Teamleden geven elkaar ongeprovoceerde, constructieve feedback.","Teamleden hechten weinig belang aan titels en status.","Teamleden ondersteunen groepsbeslissingen."],"disfuncties":{"D1: Gebrek aan vertrouwen":[1,6,10,13,17,22,32,33],"D2: Angst voor conflicten":[2,4,5,7,12,18,23,27],"D3: Gebrek aan betrokkenheid":[11,19,24,28,30,34,38],"D4: Vermijden van verantwoordelijkheid":[8,16,20,21,26,35,36],"D5: Onoplettendheid voor resultaten":[3,9,14,15,29,31]},"disfuncties_full":{"D1: Gebrek aan vertrouwen":[1,6,10,13,17,22,32,33],"D2: Angst voor conflicten":[2,4,5,7,12,18,23,27],"D3: Gebrek aan betrokkenheid":[11,19,24,28,30,34,38],"D4: Vermijden van verantwoordelijkheid":[8,16,20,21,26,35,36],"D5: Onoplettendheid voor resultaten":[3,9,14,15,25,29,31,37]},"excluded":[25,37],"groups":{"Alle (16)":{"per_q":[3.44,4.0,4.06,3.62,4.06,3.19,3.0,2.88,4.31,3.81,3.81,2.62,2.88,3.12,3.88,3.12,4.0,2.75,3.5,3.0,3.31,3.81,2.88,4.5,2.94,3.19,3.19,4.25,4.06,4.06,3.69,4.06,4.19,4.06,3.88,3.56,2.38,4.12],"per_d":{"D1: Gebrek aan vertrouwen":{"mean":3.67,"min":1,"max":5,"n_obs":128,"n_items":8},"D2: Angst voor conflicten":{"mean":3.27,"min":1,"max":5,"n_obs":128,"n_items":8},"D3: Gebrek aan betrokkenheid":{"mean":4.04,"min":2,"max":5,"n_obs":112,"n_items":7},"D4: Vermijden van verantwoordelijkheid":{"mean":3.28,"min":1,"max":5,"n_obs":112,"n_items":7},"D5: Onoplettendheid voor resultaten":{"mean":3.85,"min":2,"max":5,"n_obs":96,"n_items":6}},"n_resp":16},"Spelers (13)":{"per_q":[3.38,3.92,4.23,3.54,4.15,3.31,3.08,2.85,4.38,3.92,3.77,2.54,2.85,3.23,3.92,3.31,4.0,2.85,3.38,3.0,3.38,3.92,2.85,4.62,2.77,3.31,3.15,4.31,4.08,4.15,3.69,4.15,4.38,4.08,3.92,3.69,2.38,4.15],"per_d":{"D1: Gebrek aan vertrouwen":{"mean":3.74,"min":1,"max":5,"n_obs":104,"n_items":8},"D2: Angst voor conflicten":{"mean":3.26,"min":1,"max":5,"n_obs":104,"n_items":8},"D3: Gebrek aan betrokkenheid":{"mean":4.07,"min":2,"max":5,"n_obs":91,"n_items":7},"D4: Vermijden van verantwoordelijkheid":{"mean":3.35,"min":1,"max":5,"n_obs":91,"n_items":7},"D5: Onoplettendheid voor resultaten":{"mean":3.92,"min":2,"max":5,"n_obs":78,"n_items":6}},"n_resp":13},"Staf (3)":{"per_q":[3.67,4.33,3.33,4.0,3.67,2.67,2.67,3.0,4.0,3.33,4.0,3.0,3.0,2.67,3.67,2.33,4.0,2.33,4.0,3.0,3.0,3.33,3.0,4.0,3.67,2.67,3.33,4.0,4.0,3.67,3.67,3.67,3.33,4.0,3.67,3.0,2.33,4.0],"per_d":{"D1: Gebrek aan vertrouwen":{"mean":3.38,"min":2,"max":4,"n_obs":24,"n_items":8},"D2: Angst voor conflicten":{"mean":3.29,"min":2,"max":5,"n_obs":24,"n_items":8},"D3: Gebrek aan betrokkenheid":{"mean":3.95,"min":3,"max":4,"n_obs":21,"n_items":7},"D4: Vermijden van verantwoordelijkheid":{"mean":2.95,"min":2,"max":4,"n_obs":21,"n_items":7},"D5: Onoplettendheid voor resultaten":{"mean":3.56,"min":2,"max":5,"n_obs":18,"n_items":6}},"n_resp":3}},"individuals":[{"label":"Staf 1","role":"Trainer/Coach/Manager","answers":[4,5,3,4,3,2,2,3,4,4,4,3,3,3,4,2,4,3,4,3,3,4,4,4,4,3,4,4,4,4,5,4,4,4,4,3,2,4],"per_d":{"D1: Gebrek aan vertrouwen":3.62,"D2: Angst voor conflicten":3.5,"D3: Gebrek aan betrokkenheid":4.0,"D4: Vermijden van verantwoordelijkheid":3.0,"D5: Onoplettendheid voor resultaten":3.83}},{"label":"Speler 1","role":"Speler","answers":[4,3,3,4,5,3,3,1,4,4,3,1,1,2,4,3,3,1,3,3,4,2,3,5,2,3,2,4,5,3,4,4,4,5,5,2,1,3],"per_d":{"D1: Gebrek aan vertrouwen":3.12,"D2: Angst voor conflicten":2.75,"D3: Gebrek aan betrokkenheid":3.71,"D4: Vermijden van verantwoordelijkheid":3.0,"D5: Onoplettendheid voor resultaten":3.67}},{"label":"Speler 2","role":"Speler","answers":[3,3,3,5,4,2,3,5,4,3,3,3,3,3,4,4,4,3,2,3,4,1,2,4,3,1,2,4,4,4,4,3,3,4,4,3,2,4],"per_d":{"D1: Gebrek aan vertrouwen":2.75,"D2: Angst voor conflicten":3.12,"D3: Gebrek aan betrokkenheid":3.57,"D4: Vermijden van verantwoordelijkheid":3.43,"D5: Onoplettendheid voor resultaten":3.67}},{"label":"Speler 3","role":"Speler","answers":[3,4,4,3,4,2,2,3,4,4,3,2,3,3,4,2,4,3,4,3,5,5,3,5,3,3,3,4,4,4,4,5,5,4,4,4,2,4],"per_d":{"D1: Gebrek aan vertrouwen":3.88,"D2: Angst voor conflicten":3.0,"D3: Gebrek aan betrokkenheid":4.0,"D4: Vermijden van verantwoordelijkheid":3.43,"D5: Onoplettendheid voor resultaten":3.83}},{"label":"Speler 4","role":"Speler","answers":[3,5,5,2,5,5,3,1,4,3,4,3,3,3,5,4,4,5,4,3,3,4,3,5,3,4,3,4,4,5,3,5,5,3,4,4,2,5],"per_d":{"D1: Gebrek aan vertrouwen":4.0,"D2: Angst voor conflicten":3.62,"D3: Gebrek aan betrokkenheid":4.29,"D4: Vermijden van verantwoordelijkheid":3.29,"D5: Onoplettendheid voor resultaten":4.0}},{"label":"Speler 5","role":"Speler","answers":[3,4,5,4,4,3,3,4,5,4,4,2,1,2,4,3,3,3,4,3,5,3,3,5,2,5,2,5,4,5,4,4,5,4,4,4,2,4],"per_d":{"D1: Gebrek aan vertrouwen":3.25,"D2: Angst voor conflicten":3.12,"D3: Gebrek aan betrokkenheid":4.43,"D4: Vermijden van verantwoordelijkheid":4.0,"D5: Onoplettendheid voor resultaten":4.0}},{"label":"Speler 6","role":"Speler","answers":[4,4,5,4,5,3,2,4,4,4,4,3,3,4,4,2,5,3,5,2,2,5,2,5,4,4,4,5,4,4,4,4,4,4,4,5,4,4],"per_d":{"D1: Gebrek aan vertrouwen":4.0,"D2: Angst voor conflicten":3.38,"D3: Gebrek aan betrokkenheid":4.43,"D4: Vermijden van verantwoordelijkheid":3.29,"D5: Onoplettendheid voor resultaten":4.17}},{"label":"Speler 7","role":"Speler","answers":[4,3,5,4,4,4,4,4,4,4,4,3,3,4,3,3,4,2,3,2,2,4,3,4,3,4,3,4,4,4,3,4,3,4,4,3,3,4],"per_d":{"D1: Gebrek aan vertrouwen":3.75,"D2: Angst voor conflicten":3.25,"D3: Gebrek aan betrokkenheid":3.86,"D4: Vermijden van verantwoordelijkheid":3.14,"D5: Onoplettendheid voor resultaten":3.83}},{"label":"Speler 8","role":"Speler","answers":[4,3,3,4,5,4,3,2,4,4,4,2,3,3,4,2,4,3,2,3,2,4,2,4,2,4,4,4,4,4,4,4,4,4,4,3,3,4],"per_d":{"D1: Gebrek aan vertrouwen":3.88,"D2: Angst voor conflicten":3.25,"D3: Gebrek aan betrokkenheid":3.71,"D4: Vermijden van verantwoordelijkheid":2.86,"D5: Onoplettendheid voor resultaten":3.67}},{"label":"Staf 2","role":"Trainer/Coach/Manager","answers":[4,4,3,4,4,3,3,3,4,3,4,3,3,2,3,2,4,2,4,3,3,3,2,4,3,2,3,4,4,3,3,4,3,4,3,3,2,4],"per_d":{"D1: Gebrek aan vertrouwen":3.38,"D2: Angst voor conflicten":3.12,"D3: Gebrek aan betrokkenheid":3.86,"D4: Vermijden van verantwoordelijkheid":2.71,"D5: Onoplettendheid voor resultaten":3.17}},{"label":"Staf 3","role":"Trainer/Coach/Manager","answers":[3,4,4,4,4,3,3,3,4,3,4,3,3,3,4,3,4,2,4,3,3,3,3,4,4,3,3,4,4,4,3,3,3,4,4,3,3,4],"per_d":{"D1: Gebrek aan vertrouwen":3.12,"D2: Angst voor conflicten":3.25,"D3: Gebrek aan betrokkenheid":4.0,"D4: Vermijden van verantwoordelijkheid":3.14,"D5: Onoplettendheid voor resultaten":3.67}},{"label":"Speler 9","role":"Speler","answers":[4,5,5,3,4,3,5,3,5,4,4,3,3,4,5,5,5,3,4,5,3,5,3,5,2,3,4,4,4,5,4,5,5,4,4,5,2,5],"per_d":{"D1: Gebrek aan vertrouwen":4.25,"D2: Angst voor conflicten":3.75,"D3: Gebrek aan betrokkenheid":4.43,"D4: Vermijden van verantwoordelijkheid":4.0,"D5: Onoplettendheid voor resultaten":4.5}},{"label":"Speler 10","role":"Speler","answers":[4,5,4,3,3,4,4,3,5,5,5,3,5,4,5,4,5,4,4,5,2,5,4,4,3,3,5,5,4,4,4,4,5,4,4,5,3,5],"per_d":{"D1: Gebrek aan vertrouwen":4.62,"D2: Angst voor conflicten":3.88,"D3: Gebrek aan betrokkenheid":4.43,"D4: Vermijden van verantwoordelijkheid":3.71,"D5: Onoplettendheid voor resultaten":4.33}},{"label":"Speler 11","role":"Speler","answers":[2,4,4,4,3,2,2,3,5,4,4,2,3,4,3,4,4,3,4,2,5,3,3,5,4,4,2,5,4,4,3,4,4,5,3,2,3,4],"per_d":{"D1: Gebrek aan vertrouwen":3.25,"D2: Angst voor conflicten":2.88,"D3: Gebrek aan betrokkenheid":4.43,"D4: Vermijden van verantwoordelijkheid":3.29,"D5: Onoplettendheid voor resultaten":3.83}},{"label":"Speler 12","role":"Speler","answers":[3,4,4,3,4,4,3,2,4,4,3,3,3,2,2,3,4,1,2,2,4,5,3,5,1,2,3,4,4,4,3,4,5,4,3,4,2,4],"per_d":{"D1: Gebrek aan vertrouwen":4.0,"D2: Angst voor conflicten":3.0,"D3: Gebrek aan betrokkenheid":3.71,"D4: Vermijden van verantwoordelijkheid":2.86,"D5: Onoplettendheid voor resultaten":3.17}},{"label":"Speler 13","role":"Speler","answers":[3,4,5,3,4,4,3,2,5,4,4,3,3,4,4,4,3,3,3,3,3,5,3,4,4,3,4,4,4,4,4,4,5,4,4,4,2,4],"per_d":{"D1: Gebrek aan vertrouwen":3.88,"D2: Angst voor conflicten":3.38,"D3: Gebrek aan betrokkenheid":3.86,"D4: Vermijden van verantwoordelijkheid":3.29,"D5: Onoplettendheid voor resultaten":4.33}}]};
+
+const DISF_COLORS = {
+  "D1: Gebrek aan vertrouwen":            "#1e40af",
+  "D2: Angst voor conflicten":            "#7c3aed",
+  "D3: Gebrek aan betrokkenheid":         "#0891b2",
+  "D4: Vermijden van verantwoordelijkheid":"#be185d",
+  "D5: Onoplettendheid voor resultaten":  "#ca8a04",
+};
+const DISF_LIST = Object.keys(DATA.disfuncties);
+const DISF_SHORT = {
+  "D1: Gebrek aan vertrouwen": "Vertrouwen",
+  "D2: Angst voor conflicten": "Conflict",
+  "D3: Gebrek aan betrokkenheid": "Betrokkenheid",
+  "D4: Vermijden van verantwoordelijkheid": "Verantwoordelijkheid",
+  "D5: Onoplettendheid voor resultaten": "Resultaten",
+};
+
+function scoreClass(v){ if(v>=4) return 'good'; if(v>=3) return 'warn'; return 'bad'; }
+function scoreLabel(v){ if(v>=4) return 'Sterk'; if(v>=3) return 'Aandachtspunt'; return 'Werkpunt'; }
+function pct(v){ return ((v-1)/4*100).toFixed(0); }
+
+// ----- Tabs -----
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab).classList.add('active');
+  });
+});
+
+let currentGroup = 'Alle (16)';
+
+// ----- KPI grid -----
+function renderKpi() {
+  const g = DATA.groups[currentGroup];
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = '';
+  DISF_LIST.forEach((d,i) => {
+    const v = g.per_d[d].mean;
+    const cls = scoreClass(v);
+    grid.innerHTML += `
+      <div class="kpi ${cls}">
+        <div class="label">Disfunctie ${i+1}</div>
+        <div class="name">${DISF_SHORT[d]}</div>
+        <div class="value">${v.toFixed(2)}<small>/5</small></div>
+        <span class="pill ${cls}">${scoreLabel(v)}</span>
+      </div>
+    `;
+  });
+}
+
+// ----- Pyramid -----
+function renderPyramid() {
+  const g = DATA.groups[currentGroup];
+  const order = [
+    {key:"D1: Gebrek aan vertrouwen", label:"1. Vertrouwen (basis)"},
+    {key:"D2: Angst voor conflicten", label:"2. Conflict"},
+    {key:"D3: Gebrek aan betrokkenheid", label:"3. Betrokkenheid"},
+    {key:"D4: Vermijden van verantwoordelijkheid", label:"4. Verantwoordelijkheid"},
+    {key:"D5: Onoplettendheid voor resultaten", label:"5. Resultaten (top)"},
+  ];
+  // Pyramid: bottom = vertrouwen, top = resultaten -> reverse for visual
+  const p = document.getElementById('pyramid');
+  p.innerHTML = '';
+  [...order].reverse().forEach((row, idx) => {
+    const v = g.per_d[row.key].mean;
+    const cls = scoreClass(v);
+    p.innerHTML += `<div class="level l${idx+1}">
+      <span>${row.label}</span>
+      <span class="lvl-score">${v.toFixed(2)} · ${scoreLabel(v)}</span>
+    </div>`;
+  });
+}
+
+// ----- Radar overview -----
+let radarOverviewChart;
+function renderRadarOverview() {
+  const g = DATA.groups[currentGroup];
+  const ctx = document.getElementById('radarOverview');
+  const labels = DISF_LIST.map(d => DISF_SHORT[d]);
+  const data = DISF_LIST.map(d => g.per_d[d].mean);
+  if (radarOverviewChart) radarOverviewChart.destroy();
+  radarOverviewChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: currentGroup,
+        data,
+        borderColor: '#1e3a8a',
+        backgroundColor: 'rgba(30,58,138,0.18)',
+        pointBackgroundColor: '#1e3a8a',
+        pointRadius: 5,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales: { r: { min:1, max:5, ticks:{stepSize:1}, pointLabels:{font:{size:12,weight:'600'}} }},
+      plugins: { legend:{position:'bottom'} }
+    }
+  });
+}
+
+// ----- Disfuncties accordion -----
+function renderDisfAccordion() {
+  const g = DATA.groups[currentGroup];
+  const wrap = document.getElementById('disfAccordion');
+  const excluded = new Set(DATA.excluded || []);
+  wrap.innerHTML = '';
+  DISF_LIST.forEach((d,i) => {
+    const v = g.per_d[d].mean;
+    const cls = scoreClass(v);
+    // Toon alle stellingen (inclusief uitgesloten) voor transparantie
+    const items = (DATA.disfuncties_full && DATA.disfuncties_full[d]) || DATA.disfuncties[d];
+    const rowsHtml = items.map(q => {
+      const stmtIdx = q - 1;
+      const score = g.per_q[stmtIdx];
+      const sc = scoreClass(score);
+      const isEx = excluded.has(q);
+      if (isEx) {
+        return `<tr style="opacity:.6;background:#fef3c7;">
+          <td class="num">${q}</td>
+          <td>${DATA.stellingen[stmtIdx]} <span style="font-size:11px;background:#d97706;color:white;padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:700;">UITGESLOTEN</span></td>
+          <td class="bar"><div class="barbg"><div class="barfg" style="width:${pct(score)}%;background:#9ca3af;"></div></div></td>
+          <td class="score" style="color:#6b7280;text-decoration:line-through;">${score.toFixed(2)}</td>
+        </tr>`;
+      }
+      return `<tr>
+        <td class="num">${q}</td>
+        <td>${DATA.stellingen[stmtIdx]}</td>
+        <td class="bar"><div class="barbg"><div class="barfg ${sc}" style="width:${pct(score)}%"></div></div></td>
+        <td class="score">${score.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+    const nItems = g.per_d[d].n_items || DATA.disfuncties[d].length;
+    const subExtra = items.length !== nItems ? ` · <em style="color:#d97706;">1 uitgesloten</em>` : '';
+    wrap.innerHTML += `
+      <div class="disf-item" data-d="${d}">
+        <div class="disf-head">
+          <div class="left">
+            <div class="badge" style="background:${DISF_COLORS[d]}">D${i+1}</div>
+            <div>
+              <div class="title">${d.replace(/^D\d:\s*/,'')}</div>
+              <div class="sub">${nItems} stellingen gebruikt · range ${g.per_d[d].min}–${g.per_d[d].max}${subExtra}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <span class="pill ${cls}">${scoreLabel(v)}</span>
+            <div class="score-big">${v.toFixed(2)}</div>
+            <div class="arrow">▼</div>
+          </div>
+        </div>
+        <div class="disf-body">
+          <table class="stmts"><tbody>${rowsHtml}</tbody></table>
+        </div>
+      </div>
+    `;
+  });
+  document.querySelectorAll('.disf-head').forEach(h => {
+    h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
+  });
+  // Open first one by default
+  const first = document.querySelector('.disf-item');
+  if (first) first.classList.add('open');
+}
+
+// ----- Vergelijking spelers vs staf -----
+let cmpBarChart, cmpRadarChart;
+function renderCmp() {
+  const labels = DISF_LIST.map(d => DISF_SHORT[d]);
+  const playerData = DISF_LIST.map(d => DATA.groups['Spelers (13)'].per_d[d].mean);
+  const staffData = DISF_LIST.map(d => DATA.groups['Staf (3)'].per_d[d].mean);
+
+  if (cmpBarChart) cmpBarChart.destroy();
+  cmpBarChart = new Chart(document.getElementById('cmpBar'), {
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'Spelers (13)', data:playerData, backgroundColor:'#1e3a8a'},
+      {label:'Staf (3)',     data:staffData,  backgroundColor:'#ca8a04'},
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{y:{min:1, max:5, ticks:{stepSize:1}}},
+      plugins:{legend:{position:'bottom'}}}
+  });
+
+  if (cmpRadarChart) cmpRadarChart.destroy();
+  cmpRadarChart = new Chart(document.getElementById('cmpRadar'), {
+    type:'radar',
+    data:{labels, datasets:[
+      {label:'Spelers', data:playerData, borderColor:'#1e3a8a', backgroundColor:'rgba(30,58,138,0.15)', pointBackgroundColor:'#1e3a8a'},
+      {label:'Staf',    data:staffData,  borderColor:'#ca8a04', backgroundColor:'rgba(202,138,4,0.15)', pointBackgroundColor:'#ca8a04'},
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      scales:{r:{min:1, max:5, ticks:{stepSize:1}, pointLabels:{font:{size:12,weight:'600'}}}},
+      plugins:{legend:{position:'bottom'}}}
+  });
+
+  // Diff table — sluit uitgesloten stellingen uit
+  const sp = DATA.groups['Spelers (13)'].per_q;
+  const st = DATA.groups['Staf (3)'].per_q;
+  const excluded = new Set(DATA.excluded || []);
+  const diffs = DATA.stellingen
+    .map((s,i) => ({i:i+1, s, sp:sp[i], st:st[i], d: Math.abs(sp[i]-st[i])}))
+    .filter(r => !excluded.has(r.i));
+  diffs.sort((a,b) => b.d - a.d);
+  const top = diffs.slice(0, 10);
+  const tbody = document.querySelector('#diffTable tbody');
+  tbody.innerHTML = top.map(r => {
+    const dir = r.sp > r.st ? '↑' : '↓';
+    return `<tr>
+      <td class="num">${r.i}</td>
+      <td>${r.s}</td>
+      <td class="score">${r.sp.toFixed(2)}</td>
+      <td class="score">${r.st.toFixed(2)}</td>
+      <td class="score" style="color:${r.d>=1?'#dc2626':'#5b6677'}">${dir} ${r.d.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ----- Heatmap & spread -----
+let spreadChart;
+function renderIndividueel() {
+  // Heatmap
+  const hm = document.getElementById('heatmap');
+  hm.innerHTML = '<div></div>' + DISF_LIST.map(d => `<div class="h-col-label">${DISF_SHORT[d]}</div>`).join('');
+  DATA.individuals.forEach(ind => {
+    hm.innerHTML += `<div class="h-row-label">${ind.label}</div>`;
+    DISF_LIST.forEach(d => {
+      const v = ind.per_d[d];
+      const cls = scoreClass(v);
+      let bg;
+      if (cls==='good') bg = '#16a34a';
+      else if (cls==='warn') bg = '#d97706';
+      else bg = '#dc2626';
+      hm.innerHTML += `<div class="h-cell" style="background:${bg}">${v.toFixed(1)}</div>`;
+    });
+  });
+
+
+  // Spread chart: scatter of individual means per disfunctie
+  const datasets = [];
+  DISF_LIST.forEach((d,i) => {
+    DATA.individuals.forEach(ind => {
+      datasets.push({
+        label: ind.label,
+        data: [{x:i, y:ind.per_d[d]}],
+        backgroundColor: ind.role==='Speler' ? '#1e3a8a' : '#ca8a04',
+        pointRadius: 6, pointHoverRadius: 8,
+        showLine:false,
+      });
+    });
+  });
+  const meanData = DISF_LIST.map((d,i)=>({x:i, y:DATA.groups['Alle (16)'].per_d[d].mean}));
+  datasets.push({
+    label:'Teamgemiddelde', data:meanData, type:'line',
+    borderColor:'#dc2626', borderWidth:3, pointRadius:0,
+    showLine:true, fill:false
+  });
+
+  if (spreadChart) spreadChart.destroy();
+  spreadChart = new Chart(document.getElementById('spreadChart'), {
+    type:'scatter',
+    data:{datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{type:'linear', min:-0.5, max:4.5, ticks:{stepSize:1, callback:v=>DISF_SHORT[DISF_LIST[v]]||''}},
+        y:{min:1, max:5}
+      },
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
+      }}}
+    }
+  });
+}
+
+// ----- Group toggle wiring -----
+function wireGroupToggle(id) {
+  document.querySelectorAll(`#${id} button`).forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll(`#${id} button`).forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      currentGroup = b.dataset.group;
+      document.querySelectorAll(`.group-toggle button`).forEach(x => {
+        x.classList.toggle('active', x.dataset.group === currentGroup);
+      });
+      renderKpi(); renderPyramid(); renderRadarOverview(); renderDisfAccordion();
+    });
+  });
+}
+wireGroupToggle('group-toggle');
+wireGroupToggle('group-toggle-d');
+
+// Initial render
+renderKpi();
+renderPyramid();
+renderRadarOverview();
+renderDisfAccordion();
+renderCmp();
+renderIndividueel();
+</script>
+</body>
+</html>
