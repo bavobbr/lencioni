@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Five · Shrimprefuge</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d0f16; color: #d0d3e8; }
+  header { background: #090b10; color: white; padding: 14px 24px; border-bottom: 1px solid #1e2236; }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header p { font-size: 12px; opacity: 0.45; margin-top: 3px; }
+
+  .main { padding: 20px; max-width: 900px; margin: 0 auto; }
+
+  .note { background: #1a1800; border: 1px solid #3a3000; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #c8a840; margin-bottom: 18px; }
+
+  /* Section headers */
+  .section-title {
+    font-size: 13px; font-weight: 700; color: #7b80a0;
+    letter-spacing: .04em; text-transform: uppercase;
+    margin: 28px 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: #1e2236; }
+
+  /* Panel card */
+  .panel {
+    background: #131620; border-radius: 14px; padding: 20px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.4); margin-bottom: 16px;
+    border: 1px solid #1e2236;
+  }
+  .panel h3 { font-size: 13px; font-weight: 600; color: #c0c4dc; margin-bottom: 4px; }
+  .panel .sub { font-size: 11px; color: #55607a; margin-bottom: 14px; }
+
+  /* Legend */
+  .legend { background: #131620; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 12px rgba(0,0,0,.3); border: 1px solid #1e2236; margin-bottom: 20px; font-size: 12px; }
+  .legend h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #c0c4dc; }
+  .legend-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  @media (max-width: 500px) { .legend-grid { grid-template-columns: 1fr 1fr; } }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+  .legend-name { font-weight: 600; }
+  .legend-desc { color: #55607a; margin-top: 2px; }
+
+  /* Fingerprint chart */
+  .fingerprint-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 600px) { .fingerprint-wrap { grid-template-columns: 1fr; } }
+  .radar-wrap { height: 240px; position: relative; }
+  .finger-stats { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+  .fstat-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .fstat-label { width: 120px; font-weight: 600; color: #9095b0; font-size: 11px; }
+  .fstat-label span { display: block; font-weight: 400; color: #45506a; font-size: 10px; }
+  .fstat-bar-bg { flex: 1; height: 6px; background: #1e2236; border-radius: 3px; position: relative; overflow: visible; }
+  .fstat-bar-fill { height: 100%; border-radius: 3px; }
+  .fstat-baseline { position: absolute; top: -3px; width: 2px; height: 12px; background: #3a3f55; left: 50%; }
+  .fstat-val { width: 28px; text-align: right; font-weight: 700; font-size: 13px; }
+  .fstat-delta { width: 36px; text-align: right; font-size: 10px; font-weight: 600; }
+
+  /* Heatmap */
+  .heatmap-table { width: 100%; border-collapse: separate; border-spacing: 4px; font-size: 12px; }
+  .heatmap-table th { font-weight: 600; font-size: 11px; color: #55607a; padding: 4px 6px; text-align: center; }
+  .heatmap-table td { text-align: center; padding: 6px 4px; border-radius: 6px; font-weight: 700; font-size: 13px; color: white; min-width: 38px; }
+  .heatmap-table .user-col { text-align: left; font-weight: 600; font-size: 12px; color: #9095b0; padding-left: 0; white-space: nowrap; }
+
+  /* Scatter grid */
+  .scatter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .scatter-grid { grid-template-columns: 1fr; } }
+  .scatter-wrap { height: 280px; position: relative; }
+
+  /* User card */
+  .user-card { background: #131620; border-radius: 14px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,.4); border: 1px solid #1e2236; margin-bottom: 20px; }
+  .card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #2a3d72, #6c63ff); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 700; flex-shrink: 0; }
+  .card-header h2 { font-size: 20px; font-weight: 700; color: #e0e3f0; }
+  .card-header .meta { font-size: 12px; color: #45506a; margin-top: 3px; }
+  .layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 600px) { .layout { grid-template-columns: 1fr; } }
+  .card-radar-wrap { height: 220px; position: relative; }
+  .trait-list { display: flex; flex-direction: column; gap: 4px; }
+  .trait-row { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 5px 6px; border-radius: 7px; cursor: pointer; transition: background 0.15s; user-select: none; }
+  .trait-row:hover { background: #1a1e30; }
+  .trait-row.active { background: #1a2048; }
+  .trait-label { width: 130px; font-weight: 600; color: #9095b0; font-size: 12px; }
+  .trait-label span { display: block; font-weight: 400; color: #45506a; font-size: 10px; margin-top: 1px; }
+  .bar-bg { flex: 1; height: 8px; background: #1e2236; border-radius: 4px; overflow: hidden; }
+  .bar-fg { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .score-val { width: 28px; text-align: right; font-weight: 700; font-size: 14px; }
+  .expand-icon { width: 16px; font-size: 10px; color: #45506a; text-align: center; flex-shrink: 0; }
+  .reasoning-panel { display: none; margin: 2px 6px 6px 6px; padding: 10px 12px; background: #0e1020; border-left: 3px solid #6c63ff; border-radius: 0 6px 6px 0; font-size: 12px; line-height: 1.7; color: #8890aa; animation: fadeIn 0.15s ease; }
+  .reasoning-panel.visible { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .reasoning-hint { font-size: 10px; color: #45506a; text-align: right; margin-top: 6px; margin-bottom: -2px; }
+  .summary { margin-top: 18px; padding-top: 16px; border-top: 1px solid #1e2236; font-size: 13px; line-height: 1.7; color: #7080a0; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: white; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🦐 Shrimprefuge · Big Five Personality Analysis</h1>
+  <p>OCEAN scores derived from forum post language analysis · Dutch · Claude analysis</p>
+</header>
+
+<div class="main">
+  <div class="note">8 users analyzed · ~2000 posts per user sampled evenly across full posting history · Click any trait row in individual cards to see evidence</div>
+
+  <div class="legend">
+    <h3>Big Five (OCEAN) — what each trait means</h3>
+    <div class="legend-grid">
+      <div><div><span class="legend-dot" style="background:#6c63ff"></span><span class="legend-name">Openness</span></div><div class="legend-desc">Curiosity, creativity, intellectual engagement</div></div>
+      <div><div><span class="legend-dot" style="background:#2ecc71"></span><span class="legend-name">Conscientiousness</span></div><div class="legend-desc">Organization, reliability, analytical depth</div></div>
+      <div><div><span class="legend-dot" style="background:#f39c12"></span><span class="legend-name">Extraversion</span></div><div class="legend-desc">Sociability, assertiveness, engagement</div></div>
+      <div><div><span class="legend-dot" style="background:#e91e8c"></span><span class="legend-name">Agreeableness</span></div><div class="legend-desc">Cooperativeness, empathy, warmth</div></div>
+      <div><div><span class="legend-dot" style="background:#e74c3c"></span><span class="legend-name">Neuroticism</span></div><div class="legend-desc">Emotional instability, anxiety, irritability</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ GROUP VIEWS ═══════════════════════ -->
+  <div class="section-title">Community Profile</div>
+
+  <!-- Fingerprint -->
+  <div class="panel">
+    <h3>Community fingerprint vs population baseline</h3>
+    <div class="sub">Group average compared to the Big Five population mean (50). The Shrimprefuge signature: high curiosity, analytical depth — strikingly low warmth and emotional reactivity.</div>
+    <div class="fingerprint-wrap">
+      <div class="radar-wrap"><canvas id="group-radar"></canvas></div>
+      <div class="finger-stats" id="finger-stats"></div>
+    </div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="section-title">Score Heatmap</div>
+  <div class="panel">
+    <h3>All users · all traits</h3>
+    <div class="sub">Darker cell = higher score. Sorted by Openness. Click a user name to jump to their card.</div>
+    <div style="overflow-x:auto"><table class="heatmap-table" id="heatmap"></table></div>
+  </div>
+
+  <!-- Scatter plots -->
+  <div class="section-title">Personality Space</div>
+  <div class="scatter-grid">
+    <div class="panel">
+      <h3>Openness vs Agreeableness</h3>
+      <div class="sub">Curiosity on x, warmth on y. Everyone is curious; nobody is warm.</div>
+      <div class="scatter-wrap"><canvas id="scatter-oa"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>Extraversion vs Conscientiousness</h3>
+      <div class="sub">Social energy on x, analytical depth on y. acku is the clear outlier: analytical but withdrawn.</div>
+      <div class="scatter-wrap"><canvas id="scatter-ec"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Trait rankings -->
+  <div class="section-title">Trait Rankings</div>
+  <div class="panel">
+    <h3>Who scores highest and lowest on each trait?</h3>
+    <div class="sub">Rankings within this group.</div>
+    <div id="rankings"></div>
+  </div>
+
+  <!-- ═══════════════════════ INDIVIDUAL CARDS ═══════════════════════ -->
+  <div class="section-title">Individual Profiles</div>
+  <div id="cards"></div>
+</div>
+
+<script>
+const TRAITS = [
+  { key: 'O', label: 'Openness',          sub: 'curiosity & intellect',   color: '#6c63ff' },
+  { key: 'C', label: 'Conscientiousness', sub: 'order & discipline',      color: '#2ecc71' },
+  { key: 'E', label: 'Extraversion',      sub: 'sociability & energy',    color: '#f39c12' },
+  { key: 'A', label: 'Agreeableness',     sub: 'warmth & cooperation',    color: '#e91e8c' },
+  { key: 'N', label: 'Neuroticism',       sub: 'emotional instability',   color: '#e74c3c' },
+];
+
+const USERS = [
+  {
+    id: 'acku', name: 'acku', postsAnalyzed: 2027, postsTotal: 10234, yearsActive: '2010–2026',
+    scores: { O: 72, C: 63, E: 44, A: 38, N: 28 },
+    reasoning: {
+      O: 'Posts substantively across AI/tech, gaming (D&D, StS, boardgames), energy policy, film/TV, and social philosophy — a genuinely broad intellectual range. Builds an AI persona-simulation project in his spare time and changes careers to work in AI after 20 years elsewhere, showing a strong appetite for novelty. Engages with abstract systemic questions (long-term software architecture, energy grid transitions) and revises positions when presented with real evidence.',
+      C: 'Consistently structures debates with logical connectors ("ten eerste", "bijgevolg", "met andere woorden") and calls out logical fallacies by name (strawman, whataboutism, circular reasoning). Provides detailed multi-step reasoning in posts about game mechanics, tech decisions, and policy. Self-corrects ~90 times in the corpus and acknowledges uncertainty ("dat weet ik eerlijk gezegd niet"). Occasional loose, stream-of-consciousness one-liners prevent a higher score.',
+      E: 'A consistent responder rather than a prolific thread initiator; engages steadily but not with high social energy. His AI Resurrect project is motivated by nostalgia for social forum life, and he participates in BSG werewolf games (a highly social format). However, his post style is mostly reactive and analytical — not the high-frequency banter of a high extravert.',
+      A: 'Blunt and direct to a fault — "dikke zever", "slaat nergens op", "ge zijt ne strawman aan t schijten" appear frequently. Willingly escalates in debates and calls out specific people by name. Others perceive him as arrogant ("Iedereen is mis, Bavo is juist" — a community parody of his style, 2022). Acknowledges good points when forced, but shows little warmth proactively.',
+      N: 'Maintains analytical composure even under personal criticism — when called "hautain" he responds structurally, not emotionally. Uses dry irony ("Senior Verkeersveiligheid Engineer acku") and detached humor. Frustration is framed analytically ("frustrerend dat de tech er niet is") rather than reactively.',
+    },
+    summary: `Acku is a broadly curious, analytically rigorous techie with a sharp argumentative edge and emotional composure. He brings genuine intellectual range — from AI system design to game mechanics to energy policy — and argues with logical precision, but his style is blunt enough to regularly generate friction. He is stable under pressure and does not escalate emotionally, preferring to dismantle arguments structurally rather than personally.`,
+    tags: ['Analytisch', 'Scherp debater', 'Techie', 'Intellectueel breed', 'Emotioneel stabiel', 'Direct'],
+  },
+  {
+    id: 'guns', name: 'guns', postsAnalyzed: 3690, postsTotal: 7997, yearsActive: '2010–2026',
+    scores: { O: 67, C: 66, E: 56, A: 33, N: 26 },
+    reasoning: {
+      O: 'Engages meaningfully across at least 8 distinct domains — tabletop RPG world-building (Nobilis GM), tech/AI discourse, political philosophy, economics, film/TV criticism, sport, music (Brel), and game design. Actively interrogates logical frameworks and shows willingness to revise positions when evidence warrants. However, football dominates strongly (1,162 of 3,690 substantive posts), suggesting a real comfort zone that tempers his overall openness score.',
+      C: 'Consistently produces structured, multi-step arguments with a mean post length of 394 characters and over 1,000 posts exceeding 400 characters. Cites specific sources when making factual claims, precisely references rules mid-RPG sessions (flanking geometry, initiative order), and explicitly flags his own premises. Occasionally self-corrects when shown to be wrong.',
+      E: 'A prolific long-term contributor serving as GM/DM and active organizer for group RPG campaigns — roles requiring sustained social initiative and energy. Regularly leads debate positions rather than merely reacting, and maintains dry bantering humor throughout. However, @mentions and social-opener posts are rare (4 instances), and his posting style is debate-engagement rather than social bonding.',
+      A: 'Blunt and frequently dismissive: 152 posts include terms like "randdebiel", "dikke zever", "dikke bullshit", or "onnozel" directed at other users\' arguments. Rarely softens criticism or adds diplomatic hedges. Occasional warmth appears ("lapino is een van de sympathiekste mensen hier") but his default register is competitive and direct.',
+      N: 'Under provocation turns to dry irony ("ergens apprecieer ik het dat ge zoveel moeite doet om mijn punt te bewijzen") rather than emotional escalation. Maintains a consistently analytical tone even in heated political debates. One notable exception: a post expressing genuine vulnerability about AI threatening programming as "the only joy in my work".',
+    },
+    summary: `guns is an analytically sharp, high-volume contributor who engages across a wide range of topics with structured arguments and a willingness to cite evidence. His debate style is direct to the point of bluntness — he will call out what he sees as intellectual dishonesty without softening the blow — but this appears principled rather than personally hostile. Emotionally very stable, deflecting criticism with dry irony and rarely showing reactive distress.`,
+    tags: ['Analytisch', 'Direct', 'Stabiel', 'Debater', 'Droge humor', 'Veelzijdig'],
+  },
+  {
+    id: 'potenza', name: 'potenza', postsAnalyzed: 1844, postsTotal: 10321, yearsActive: '2011–2026',
+    scores: { O: 68, C: 65, E: 58, A: 40, N: 25 },
+    reasoning: {
+      O: 'Ranges across an unusually wide set of domains — F1 history and strategy, expert-level PC hardware, Belgian comics, historical non-fiction (Habsburg 16th century), AI/LLM ethics, democratic theory citing ancient Athens, craft beer, film, and real estate. Discusses AI with genuine intellectual curiosity ("beangstigend en creepy tegelijkertijd") and revises positions when corrected ("Mea culpa!"). Stops just short of 70+ because engagement is deep within established interest zones rather than wildly exploratory.',
+      C: 'F1 analyses are structured with explicit +/- bullet points per team and precise technical vocabulary (DAS system, pull-rod suspension, PSU Gold/Platinum ratings); hardware advice cites specific model numbers and Tom\'s Hardware sources. Routinely explains multi-step reasoning in debates. Capped at 65 because he code-switches to casual stream-of-consciousness in banter threads.',
+      E: 'With 10,321 total posts over 15 years and up to 14 posts in a single day, a high-volume, highly engaged participant. Regularly initiates threads (home renovation Q&A, tool recommendations, film requests for class) and uses playful, energetic language ("aaah yiss", "jooo"). Scores slightly below the top because his posts are more deliberate and measured.',
+      A: 'Genuinely warm and generous when helping people with honest questions — hardware advice threads are thorough and patient. However, blunt to the point of condescension when confronting ignorance or bad faith: "Eigenlijk zijt ge gewoon biased en slecht geïnformeerd", "Dat is leerstof voor leerlingen in de eerste graad".',
+      N: 'Mentions a burn-out at his school almost in passing and immediately relativizes it ("Ach, dit is volstrekt geen representatieve klas. Ik kan het goed relativeren"). Returns to dry humor or analytical detachment under criticism. Theatrical frustrations read as performative venting. Fitting his self-description as "Cynische rechtse Vlaming".',
+    },
+    summary: `Potenza is a well-read Flemish secondary school teacher and 15-year forum veteran whose posts combine expert-level technical depth (F1 strategy, PC hardware) with genuine intellectual breadth across culture, politics, and society. He is a high-energy, high-volume contributor who is warm and methodical when helping, but sharp and dismissive when confronted with what he perceives as bad faith or ignorance.`,
+    tags: ['Expert-adviseur', 'Analytisch', 'Ironisch-cynisch', 'Breed nieuwsgierig', 'Direct', 'Stabiel'],
+  },
+  {
+    id: 'ase', name: ']as]e', postsAnalyzed: 1721, postsTotal: 8314, yearsActive: '2010–2026',
+    scores: { O: 62, C: 55, E: 52, A: 29, N: 22 },
+    reasoning: {
+      O: 'Shows genuine intellectual curiosity in tech (Angular vs React architecture, .NET migration, AI coding tools, EV adoption) and music/culture (posting obscure electronic tracks from the 90s, recommending films). However, interests are fairly concentrated — cycling, tech, politics — rather than abstractly wide-ranging, and he rarely pursues philosophical or aesthetic tangents for their own sake.',
+      C: 'Analytical posts are solid and fact-grounded — correcting RCP8.5 climate baseline misuse, explaining USB-C standards, or walking through a thorough bike component purchase decision. Methodical in hobbies (cycling statistics, sim-racing setup) but many posts are short reactive quips rather than structured arguments.',
+      E: 'Active long-time participant who initiates threads, organises group cycling events, hosts BBQs, and posts live from cycling races. Socially embedded in the forum community and clearly enjoys banter. Yet many posts are replies/reactions rather than self-initiated content, and his style often involves watching debates from the sidelines before landing a sardonic one-liner.',
+      A: 'Consistently blunt and combative. Openly mocks opponents ("jaloers + projectie", calling out "pseudo-gezeik"), dismisses people he disagrees with curtly, and uses cutting irony routinely. Not hostile without reason, but warmth and cooperative deference are notably absent.',
+      N: 'Maintains a consistently detached, ironic tone even during political flare-ups — mocks rather than fumes. Over 15+ years of posts there is little evidence of emotional volatility, anxious spiralling, or self-pity. Even when discussing personal health (cycling injuries) or frustrations, stays dry and matter-of-fact.',
+    },
+    summary: `[as]e is a sharp, sardonic Belgian forum veteran with a 15-year posting history spanning cycling, tech, politics, and electronic music. He combines genuine technical knowledge with a deflating wit that he deploys freely against perceived pomposity, political bad faith, and forum theatrics. Emotionally cool and consistent, he is a low-agreeableness, moderate-openness commentator.`,
+    tags: ['Sardonisch', 'Tech-savvy', 'Wielrenner', 'Politiek betrokken', 'IJzig stabiel', 'Combatief'],
+  },
+  {
+    id: 'darthjabbaboulet', name: 'darthjabbaboulet', postsAnalyzed: 1888, postsTotal: 8190, yearsActive: '2013–2026',
+    scores: { O: 58, C: 60, E: 57, A: 28, N: 20 },
+    reasoning: {
+      O: 'Engages a moderate but not especially wide range of topics: gaming (with genuine depth in RPGs and Warhammer 40K lore), Belgian and geopolitics, food culture, and legal reasoning. However, abstract or philosophical discussions are rare (only 9 philosophy hits across 1,888 posts), and he stays firmly within a defined intellectual comfort zone rather than exploring unfamiliar ideas or perspectives.',
+      C: 'Regularly structures arguments with causal connectors (137 reasoned posts over 300 characters), cites legal precedents, and distinguishes nuance in geopolitical scenarios (e.g., NATO deterrence logic, US-Russia-EU gas dependency). That said, the majority of posts are short reactive jabs, and he shows little evidence of systematic preparation or sustained follow-through on complex positions.',
+      E: 'Initiates about 51% of posts and is a consistent, high-volume contributor across many threads since 2013. Confidently asserts opinions and challenges others without hesitation. However, warmth and social connection are largely absent — his engagement is debate-oriented rather than social or community-building.',
+      A: 'Frequently dismissive and contemptuous, labeling others "gespuis", "zot", "dom wijf", "leugenaar", and "stroman" (152 dismissive markers). While he concedes when genuinely wrong (90 concession instances), he does so reluctantly. Shows almost zero emotional warmth or empathy.',
+      N: 'Remarkably emotionally stable: only 69 emotionally charged posts out of 1,888 (3.7%), zero posts of genuine emotional vulnerability, and even his aggressive outbursts read as calculated provocations rather than emotional destabilization.',
+    },
+    summary: `darthjabbaboulet is a confident, opinionated forum debater with a sharp and often contemptuous style. He is analytically capable within his preferred domains (law, geopolitics, gaming) but combative and low in warmth, relying on dismissal and sarcasm more than persuasion. His emotional stability is notably high — he rarely loses composure even when others push back hard.`,
+    tags: ['Combatief', 'Analytisch', 'Direct', 'Emotioneel stabiel', 'Assertief', 'Sarcastisch'],
+  },
+  {
+    id: 'hentai', name: 'hentai', postsAnalyzed: 1900, postsTotal: 5847, yearsActive: '2010–2026',
+    scores: { O: 70, C: 65, E: 55, A: 38, N: 26 },
+    reasoning: {
+      O: 'Engages substantively across a genuinely wide topic range — F1 strategy, PC hardware, RPG game-mastering, AI tooling, vinyl/music, strip/comics, architecture, politics, and gaming — showing real curiosity rather than surface-level breadth. Posts detailed aesthetic opinions (comic art styles, F1 liveries, sound engineering) and initiates creative community experiments (Nobilis RPG campaign, AI persona project). Slightly penalized relative to the most open users because her range, while broad, is somewhat anchored to recurring interest clusters.',
+      C: 'Writes technically thorough and structured responses on hardware, renovation, and debate logic — often tracing opponents\' logical errors step by step across multiple posts and citing concrete data (lap counts, prices, specifications). Runs and organizes forum events (game brawl, RPG campaign) with clear structure. However, a significant portion of posts are brief reactions or short humor, suggesting functional rather than perfectionist conscientiousness.',
+      E: 'Shows initiative by launching forum projects (RPG campaigns, community game events, AI persona experiment), pitching ideas publicly with enthusiasm, and sustaining multi-day engagement threads. Assertively confronts people by name in debates and rarely withdraws from public disagreements. Tempered because her tone is often analytical rather than energetic, and many posts are reactive rather than scene-setting.',
+      A: 'Regularly labels opponents\' arguments as dwaas, onnozel, or irrelevant, and applies blunt labels to people (schaambal, hypocrieten, dat gespuis). Willing to hold a combative position for many consecutive posts. Counterbalanced by genuine warmth in some posts (thanking helpers, praising community contributions, expressing empathy for colleagues), and occasional self-deprecating humor that softens her confrontational edge.',
+      N: 'Consistently stable register across 16 years of posting — debates are prosecuted methodically and patiently even when heated, and strong opinions on politics or morality are delivered analytically rather than emotionally. Occasional mild venting (traffic frustrations, political anger) reads as normal forum expression rather than genuine emotional instability.',
+    },
+    summary: `Hentai is a broadly curious, confident, and analytically assertive forum regular who has been active since 2010. She brings genuine depth to technical and cultural topics, initiates community projects, and engages in debates with methodical persistence — but is unapologetically blunt and has little patience for what she considers poor reasoning. She is emotionally steady and not easily rattled.`,
+    tags: ['Analytisch', 'Assertief', 'Nieuwsgierig', 'Direct', 'Community-builder', 'Tech-savvy'],
+  },
+  {
+    id: 'deathknight', name: 'deathknight', postsAnalyzed: 1764, postsTotal: 6347, yearsActive: '2008–2024',
+    scores: { O: 74, C: 65, E: 50, A: 32, N: 22 },
+    reasoning: {
+      O: 'Exceptionally broad interests spanning metal music (performing in an 80s cover band, Thundersteel), RPGs (Divinity, Fallout, Disco Elysium, BG3), wrestling, vintage watches (Vostok, Hamilton), dogs, tech and classic film. Draws sharp cross-domain aesthetic comparisons ("Fisher Price vs DeWalt" for Outer Worlds vs Disco Elysium) and engages deeply with abstract game design philosophy from his professional vantage at Larian Studios. His enthusiasm for Disco Elysium ("HET IS NAMELIJK BETER") and for obscure Japanese metal acts signals genuine aesthetic curiosity above the forum baseline.',
+      C: 'Produces 444 posts over 300 characters, with structured argumentation — e.g., a methodical critique of journalism methodology ("jullie hebben geen kaas gegeten van het opzetten van dergelijke studie"), detailed pro/con lists for hardware, and technically precise explanations of BG3 asset pipelines and localization tradeoffs. Professionally very organized: discusses UI architecture, crunch management, and QA reproducibility at Larian with clear structure.',
+      E: 'Initiates roughly 80% of his posts rather than merely responding, actively performs with a band in public venues, and returned from a BG3 press tour buzzing with "bakken adrenaline en hype". Holds court on multiple topic threads, organizes game giveaways, and shares personal life updates freely. However, his 2024 post reveals deliberate withdrawal ("minder schermen") and a quiet home life — placing him at a moderate rather than high level.',
+      A: 'Blunt and unsparing by default — dismisses games as "zeikspel", calls a trainer "een omhooggevallen idioot", labels bad journalism "een belachelijke studie". No diplomatic softening in his opinions. Offset by genuine warmth toward his partner ("mijn wijf"), his dogs, close forum friends, and colleagues — he checks in on a colleague\'s crunch situation with real concern. The warmth is selective and earned, not broadly agreeable.',
+      N: 'Only 23 emotional outbursts in ~1800 posts, predominantly humorous caps-lock ("GODVERDOMME", "JEZUS") rather than genuine distress. Handles technical frustrations with sardonic wit rather than spiral. Professionally navigated years of game development crunch and a major IP launch (BG3) without visible anxiety. Self-aware about his own reactions ("achteraf voelde ik mij slecht" after talking someone out of writing a book).',
+    },
+    summary: `Deathknight is a creatively curious, professionally accomplished game developer at Larian Studios who brings insider depth to RPG discussions and maintains an unusually broad range of genuine interests — metal music (including performing), vintage watches, dogs, wrestling, and classic games. He is direct and unsparing in his opinions but reveals selective warmth toward people he cares about. Emotionally stable and self-aware, he operates with calm confidence whether defending BG3 on a press tour or dismissing a bad game with two words.`,
+    tags: ['Insider-expert', 'Opinionated', 'Breed geïnteresseerd', 'Emotioneel stabiel', 'Performer', 'Direct'],
+  },
+  {
+    id: 'peephole', name: 'peephole', postsAnalyzed: 1640, postsTotal: 4275, yearsActive: '2007–2009',
+    scores: { O: 67, C: 60, E: 50, A: 33, N: 22 },
+    reasoning: {
+      O: 'Engages across a genuinely wide topical range — Belgian coalition politics (BHV, Leterme), international politics (Obama\'s stimulus, Ron Paul), electronic music festivals (Werchter line-ups), gaming (Dawn of War), TV (House, BSG), religion, and cosmology. Shares Carl Sagan content and cites The Lancet against the Pope\'s AIDS stance, signaling real intellectual curiosity. Somewhat more pop-culture-anchored than purely abstract, landing slightly below the most curious members.',
+      C: 'Frequently corrects factual errors with citations (Wikipedia, The Lancet, election statistics like "De Gucht had 50504 voorkeurstemmen"), constructs multi-step arguments in political and economic threads, and sustains positions across several reply rounds. However, a large proportion of posts are sharp one-liners or short quips rather than structured analysis.',
+      E: 'Posts at all hours including 2–5am, maintains a near-even initiating-to-responding ratio (687 vs 824), and comfortably jokes with or teases named forum members by name. His wit and frequency signal active social engagement. He is lively and present but not particularly dominant or assertive, fitting a mid-range extraversion score.',
+      A: 'Deploys blunt insults ("randdebiel", "schaamballen", "dom", "mongool") toward opponents in debate, dismisses perceived bad-faith arguments with sarcasm ("Gij weet nu eens echt van geen kloten he"), and is quick to mock rather than accommodate. Humor softens the edges but his default mode in disagreement is sharp rather than conciliatory.',
+      N: 'Tone remains consistently dry and ironic across political, social, and pop-culture threads. Caps-lock bursts appear in clearly comedic, performative contexts rather than as genuine emotional venting. Even in heated political debates (Ron Paul, Obama stimulus, BHV) he stays detached and sardonic, indicating very low emotional reactivity.',
+    },
+    summary: `Peephole is a sharp, intellectually curious Belgian forum member with a dry, sardonic wit and a taste for factual precision. He roamed freely across politics, music, science, and pop culture during his active 2007–2009 period, consistently puncturing bad arguments with citations and cool dismissiveness rather than heat. Low in neuroticism and agreeableness, he is a reliable debater who prefers wit over warmth.`,
+    tags: ['Sardonisch', 'Fact-checker', 'Politiek betrokken', 'Droge humor', 'Cultureel nieuwsgierig', 'Direct'],
+  },
+];
+
+// ─── User colors for scatter plots ───
+const USER_COLORS = [
+  '#6c63ff','#2ecc71','#f39c12','#e91e8c',
+  '#e74c3c','#00bcd4','#9c27b0','#ff7043'
+];
+
+// ─── Compute group averages ───
+const avgScores = {};
+TRAITS.forEach(t => {
+  avgScores[t.key] = Math.round(USERS.reduce((s, u) => s + u.scores[t.key], 0) / USERS.length);
+});
+
+// ─── 1. Group radar ───
+(function buildGroupRadar() {
+  const ctx = document.getElementById('group-radar');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: TRAITS.map(t => t.key),
+      datasets: [
+        {
+          label: 'Shrimprefuge avg',
+          data: TRAITS.map(t => avgScores[t.key]),
+          borderColor: '#3d5a99',
+          backgroundColor: 'rgba(61,90,153,0.18)',
+          borderWidth: 2,
+          pointRadius: 5,
+          pointBackgroundColor: TRAITS.map(t => t.color),
+        },
+        {
+          label: 'Population baseline',
+          data: TRAITS.map(() => 50),
+          borderColor: '#3a3f55',
+          backgroundColor: 'rgba(58,63,85,0.05)',
+          borderWidth: 1.5,
+          borderDash: [5, 5],
+          pointRadius: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { display: false },
+          pointLabels: { display: false },
+          grid: { color: '#1e2236' }, angleLines: { color: '#1e2236' },
+        }
+      },
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12, color: '#7b80a0' } } }
+    }
+  });
+
+  // Stats bars
+  const container = document.getElementById('finger-stats');
+  TRAITS.forEach(t => {
+    const avg = avgScores[t.key];
+    const delta = avg - 50;
+    const sign = delta > 0 ? '+' : '';
+    const deltaColor = t.key === 'N' ? (delta < 0 ? '#2ecc71' : '#e74c3c') : (delta > 0 ? t.color : '#aaa');
+    container.innerHTML += `
+      <div class="fstat-row">
+        <div class="fstat-label">${t.label}<span>${t.sub}</span></div>
+        <div class="fstat-bar-bg">
+          <div class="fstat-bar-fill" style="width:${avg}%;background:${t.color};opacity:0.85"></div>
+          <div class="fstat-baseline"></div>
+        </div>
+        <div class="fstat-val" style="color:${t.color}">${avg}</div>
+        <div class="fstat-delta" style="color:${deltaColor}">${sign}${delta}</div>
+      </div>`;
+  });
+})();
+
+// ─── 2. Heatmap ───
+(function buildHeatmap() {
+  const table = document.getElementById('heatmap');
+  const sorted = [...USERS].sort((a, b) => b.scores.O - a.scores.O);
+
+  // Header
+  let html = '<thead><tr><th style="text-align:left">User</th>';
+  TRAITS.forEach(t => { html += `<th>${t.key}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  sorted.forEach(user => {
+    html += `<tr><td class="user-col"><a href="#card-${user.id}" style="color:#7b8cde;text-decoration:none;font-weight:600">${user.name}</a></td>`;
+    TRAITS.forEach(t => {
+      const score = user.scores[t.key];
+      const opacity = 0.25 + (score / 100) * 0.75;
+      html += `<td style="background:${t.color};opacity:${opacity.toFixed(2)};color:white">${score}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+})();
+
+// ─── 3. Scatter plots ───
+const labelPlugin = {
+  id: 'userLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = '600 10px -apple-system, sans-serif';
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (meta.data.length) {
+        const el = meta.data[0];
+        const { x, y } = el.getProps(['x', 'y'], true);
+        ctx.fillStyle = dataset.borderColor;
+        ctx.fillText(dataset.label, x + 7, y + 4);
+      }
+    });
+    ctx.restore();
+  }
+};
+
+function makeScatter(canvasId, xKey, yKey) {
+  const ctx = document.getElementById(canvasId);
+  const datasets = USERS.map((user, i) => ({
+    label: user.name,
+    data: [{ x: user.scores[xKey], y: user.scores[yKey] }],
+    backgroundColor: USER_COLORS[i],
+    borderColor: USER_COLORS[i],
+    pointRadius: 7,
+    pointHoverRadius: 9,
+  }));
+
+  const xTrait = TRAITS.find(t => t.key === xKey);
+  const yTrait = TRAITS.find(t => t.key === yKey);
+
+  new Chart(ctx, {
+    type: 'scatter',
+    data: { datasets },
+    plugins: [labelPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: {
+          min: 30, max: 85,
+          title: { display: true, text: xTrait.label, font: { size: 11, weight: '600' }, color: xTrait.color },
+          ticks: { font: { size: 10 }, color: '#45506a' },
+          grid: { color: '#1e2236' },
+        },
+        y: {
+          min: 15, max: 70,
+          title: { display: true, text: yTrait.label, font: { size: 11, weight: '600' }, color: yTrait.color },
+          ticks: { font: { size: 10 }, color: '#45506a' },
+          grid: { color: '#1e2236' },
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${xTrait.label} ${ctx.parsed.x}, ${yTrait.label} ${ctx.parsed.y}`
+          }
+        }
+      }
+    }
+  });
+}
+
+makeScatter('scatter-oa', 'O', 'A');
+makeScatter('scatter-ec', 'E', 'C');
+
+// ─── 4. Rankings ───
+(function buildRankings() {
+  const container = document.getElementById('rankings');
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">';
+
+  TRAITS.forEach(t => {
+    const sorted = [...USERS].sort((a, b) => b.scores[t.key] - a.scores[t.key]);
+    html += `<div style="background:#1a1e30;border-radius:10px;padding:12px">
+      <div style="font-size:11px;font-weight:700;color:${t.color};margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">${t.label}</div>`;
+    sorted.forEach((u, i) => {
+      const medal = i === 0 ? '🥇' : i === sorted.length - 1 ? '🔻' : `${i + 1}.`;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:2px 0;color:${i===0?t.color:i===sorted.length-1?'#e74c3c':'#6a7090'}">
+        <span>${medal} ${u.name}</span>
+        <span style="font-weight:700">${u.scores[t.key]}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+})();
+
+// ─── 5. Individual user cards ───
+function buildCard(user) {
+  const container = document.getElementById('cards');
+  const card = document.createElement('div');
+  card.className = 'user-card';
+  card.id = `card-${user.id}`;
+  const initials = user.name.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase();
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="avatar">${initials}</div>
+      <div>
+        <h2>${user.name}</h2>
+        <div class="meta">${user.postsAnalyzed.toLocaleString()} posts analyzed · ${user.postsTotal.toLocaleString()} total · active ${user.yearsActive}</div>
+      </div>
+    </div>
+    <div class="layout">
+      <div class="card-radar-wrap"><canvas id="radar-${user.id}"></canvas></div>
+      <div>
+        <div class="reasoning-hint">click a trait to see evidence ↓</div>
+        <div class="trait-list">
+          ${TRAITS.map(t => `
+            <div class="trait-row" data-trait="${t.key}" data-user="${user.id}">
+              <div class="trait-label">${t.label}<span>${t.sub}</span></div>
+              <div class="bar-bg"><div class="bar-fg" style="width:${user.scores[t.key]}%;background:${t.color}"></div></div>
+              <div class="score-val" style="color:${t.color}">${user.scores[t.key]}</div>
+              <div class="expand-icon">▸</div>
+            </div>
+            <div class="reasoning-panel" id="reasoning-${user.id}-${t.key}">${user.reasoning[t.key]}</div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="summary">${user.summary}</div>
+    <div class="tags">${user.tags.map(tag => `<span class="tag" style="background:#1a1a2e">${tag}</span>`).join('')}</div>
+  `;
+  container.appendChild(card);
+  card.querySelectorAll('.trait-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const trait = row.dataset.trait;
+      const userId = row.dataset.user;
+      const panel = document.getElementById(`reasoning-${userId}-${trait}`);
+      const isOpen = panel.classList.contains('visible');
+      TRAITS.forEach(t => {
+        const p = document.getElementById(`reasoning-${userId}-${t.key}`);
+        const r = card.querySelector(`[data-trait="${t.key}"]`);
+        if (p) p.classList.remove('visible');
+        if (r) { r.classList.remove('active'); const ic = r.querySelector('.expand-icon'); if (ic) ic.textContent = '▸'; }
+      });
+      if (!isOpen) {
+        panel.classList.add('visible');
+        row.classList.add('active');
+        const icon = row.querySelector('.expand-icon');
+        if (icon) icon.textContent = '▾';
+      }
+    });
+  });
+  requestAnimationFrame(() => {
+    new Chart(document.getElementById(`radar-${user.id}`), {
+      type: 'radar',
+      data: {
+        labels: TRAITS.map(t => t.key),
+        datasets: [{ data: TRAITS.map(t => user.scores[t.key]), borderColor: '#3d5a99', backgroundColor: 'rgba(61,90,153,0.15)', borderWidth: 2, pointRadius: 5, pointBackgroundColor: TRAITS.map(t => t.color) }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { r: { min: 0, max: 100, ticks: { display: false }, pointLabels: { display: false }, grid: { color: '#1e2236' }, angleLines: { color: '#1e2236' } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  });
+}
+
+USERS.forEach(buildCard);
+</script>
+</body>
+</html>
